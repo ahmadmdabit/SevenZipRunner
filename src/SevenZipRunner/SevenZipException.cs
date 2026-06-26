@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace SevenZip;
+namespace SevenZipRunner;
 
 public class SevenZipException : Exception
 {

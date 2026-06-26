@@ -3,11 +3,11 @@ name: Publish to NuGet.org
 on:
   push:
     tags:
-      - 'v*'   # e.g., v1.0.0, v1.1.0-beta.1
+      - "v*"
 
 permissions:
   contents: read
-  id-token: write   # Required for NuGet Trusted Publishing (OIDC) - NuGet/login@v1 OIDC token exchange
+  id-token: write
 
 jobs:
   publish:
@@ -28,22 +28,23 @@ jobs:
             8.0.x
             7.0.x
             6.0.x
-            
-      - name: Get version from latest tag
-        id: version
-        run: |
-          TAG=$(git describe --tags --abbrev=0)
-          VERSION=${TAG#v}   # strips the leading 'v' prefix if present
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
       - name: Restore
-        run: dotnet restore src/Linguistics.slnx
+        run: dotnet restore src/SevenZipRunner.slnx
 
       - name: Build
-        run: dotnet build src/Linguistics/Linguistics.csproj --configuration Release --no-restore
+        run: dotnet build src/SevenZipRunner/SevenZipRunner.csproj --configuration Release --no-restore
 
       - name: Pack
-        run: dotnet pack src/Linguistics/Linguistics.csproj --configuration Release --output ./artifacts /p:MinVerVersionOverride=${{ steps.version.outputs.VERSION }} --no-build
+        run: dotnet pack src/SevenZipRunner/SevenZipRunner.csproj --configuration Release --output ./artifacts --no-build
 
       - name: NuGet login (OIDC → temp API key)
         uses: NuGet/login@v1

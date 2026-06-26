@@ -76,7 +76,7 @@ The package targets .NET 6.0, 7.0, 8.0, 9.0, and 10.0.
 If you use `Microsoft.Extensions.DependencyInjection`, register the executor with your configuration:
 
 ```csharp
-using SevenZip;
+using SevenZipRunner;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 
@@ -170,6 +170,17 @@ sequenceDiagram
     Executor->>Client: throw SevenZipException
   end
 ```
+
+---
+
+## Playground Demo
+
+The repository includes a console application (`src/SevenZipRunnerPlayground/`) that demonstrates all library features with DI setup, named/default profile usage, compression, extraction, and error handling.
+
+- **Run:** `dotnet run --project src/SevenZipRunnerPlayground/SevenZipRunnerPlayground.csproj`
+- **Configuration:** `src/SevenZipRunnerPlayground/appsettings.json` mirrors the library’s options.
+
+Adjust the file paths in `Program.cs` to match your system before running.
 
 ---
 

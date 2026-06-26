@@ -4,7 +4,7 @@ using System.Text;
 
 using Microsoft.Extensions.Options;
 
-namespace SevenZip;
+namespace SevenZipRunner;
 
 public interface ISevenZipExecutor
 {

@@ -10,6 +10,10 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,31 +33,32 @@ jobs:
             7.0.x
             6.0.x
 
-      - name: Restore
-        run: dotnet restore src/Linguistics.slnx
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
-      - name: Build (all frameworks)
-        run: dotnet build src/Linguistics/Linguistics.csproj --configuration Release --no-restore
+      - name: Restore
+        run: dotnet restore src/SevenZipRunner.slnx
+
+      - name: Build
+        run: dotnet build src/SevenZipRunner/SevenZipRunner.csproj --configuration Release --no-restore
+
 
       - name: Vulnerability scan
-        run: dotnet list src/Linguistics/Linguistics.csproj package --vulnerable --include-transitive
-
-      # Resolve version dynamically from the last pushed tag (e.g. v1.0.0 → 1.0.0)
-      # This ensures CI-only commits (no new tag) still produce a correctly versioned artifact
-      - name: Resolve version from latest tag
-        id: version
         run: |
-          TAG=$(git describe --tags --abbrev=0)
-          VERSION=${TAG#v}
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          dotnet list src/SevenZipRunner/SevenZipRunner.csproj package --vulnerable --include-transitive
+          if [ $? -ne 0 ]; then exit 1; fi
 
       - name: Pack
-        run: dotnet pack src/Linguistics/Linguistics.csproj --configuration Release --output ./artifacts --no-build /p:MinVerVersionOverride=${{ steps.version.outputs.VERSION }}
+        run: dotnet pack src/SevenZipRunner/SevenZipRunner.csproj --configuration Release --output ./artifacts --no-build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Linguistics-packages
+          name: SevenZipRunner-packages
           path: ./artifacts/
-          # 7 is a safe minimum, to debug failed publish jobs
           retention-days: 7

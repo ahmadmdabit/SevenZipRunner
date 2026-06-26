@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace SevenZip;
+namespace SevenZipRunner;
 
 /// <summary>
 /// Represents a single, named compression profile.

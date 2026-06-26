@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SevenZipRunner/SevenZipRunner.csproj" />
+  <Project Path="SevenZipRunnerPlayground/SevenZipRunnerPlayground.csproj" Id="5be1a377-0c62-4b51-a588-cb11e57f0057" />
+</Solution>

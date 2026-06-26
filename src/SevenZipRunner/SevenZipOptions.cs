@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace SevenZip;
+namespace SevenZipRunner;
 
 /// <summary>
 /// Main options class, holds all profiles and the platform-aware logic.
