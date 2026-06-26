@@ -17,6 +17,46 @@ The library embeds native 7‑Zip executables for Windows and Linux (x86 and x64
 
 ---
 
+## Class Diagram – Core Types & Relationships
+
+```mermaid
+classDiagram
+  class SevenZipExecutor {
+    -SevenZipOptions options
+    -string sevenZipExePath
+    +CompressDirectoryAsync()
+    +ExtractArchiveAsync()
+    -RunCommandAsync()
+  }
+  class ISevenZipExecutor {
+    <<interface>>
+    +CompressDirectoryAsync()
+    +ExtractArchiveAsync()
+  }
+  class SevenZipOptions {
+    +string ExePath
+    +string DefaultProfile
+    +IReadOnlyDictionary~string,SevenZipProfile~ Profiles
+    +GetAdjustedProfile(profileName) SevenZipProfile
+  }
+  class SevenZipProfile {
+    +int CompressionLevel
+    +int Threads
+    +ProcessPriorityClass ProcessPriority
+  }
+  class SevenZipException {
+    +int ExitCode
+    +string StandardError
+    +string Arguments
+  }
+  ISevenZipExecutor <|.. SevenZipExecutor
+  SevenZipExecutor --> SevenZipOptions
+  SevenZipOptions --> SevenZipProfile : contains
+  SevenZipExecutor ..> SevenZipException : throws
+```
+
+---
+
 ## Installation
 
 Install the [SevenZipRunner NuGet package](https://www.nuget.org/packages/SevenZipRunner):
@@ -67,6 +107,35 @@ await executor.CompressDirectoryAsync(
 );
 ```
 
+#### Compression Workflow (Sequence Diagram)
+
+```mermaid
+sequenceDiagram
+  participant Client
+  participant Executor as SevenZipExecutor
+  participant Options as SevenZipOptions
+  participant Profile as SevenZipProfile
+  participant Process as 7z Process
+
+  Client->>Executor: CompressDirectoryAsync(src, dest, profileName)
+  Executor->>Options: GetAdjustedProfile(profileName)
+  Options->>Options: resolve default if null
+  Options->>Profile: get named profile
+  Options->>Options: cap compression if 32-bit
+  Options->>Options: set threads = CPU count if 0
+  Options-->>Executor: adjusted profile
+  Executor->>Executor: build 7z arguments (a -t7z -mx=... -mmt...)
+  Executor->>Process: start 7za.exe with args
+  Process-->>Executor: stdout/stderr
+  Executor->>Process: wait for exit
+  alt exit code == 0
+    Process-->>Executor: success
+  else
+    Process-->>Executor: non-zero exit
+    Executor->>Client: throw SevenZipException
+  end
+```
+
 ### 4. Extract an archive
 
 ```csharp
@@ -76,6 +145,30 @@ await executor.ExtractArchiveAsync(
     profileName: "Balanced",
     cancellationToken: default
 );
+```
+
+#### Extraction Workflow (Sequence Diagram)
+
+```mermaid
+sequenceDiagram
+  participant Client
+  participant Executor as SevenZipExecutor
+  participant Options as SevenZipOptions
+  participant Process as 7z Process
+
+  Client->>Executor: ExtractArchiveAsync(src, dest, profileName)
+  Executor->>Options: GetAdjustedProfile(profileName)
+  Options-->>Executor: adjusted profile (priority only)
+  Executor->>Executor: build 7z arguments (x -o...)
+  Executor->>Process: start 7za.exe with args
+  Process-->>Executor: stdout/stderr
+  Executor->>Process: wait for exit
+  alt exit code == 0
+    Process-->>Executor: success
+  else
+    Process-->>Executor: non-zero exit
+    Executor->>Client: throw SevenZipException
+  end
 ```
 
 ---
@@ -99,6 +192,27 @@ The library uses the options pattern. All settings are defined in `SevenZipOptio
 | `CompressionLevel` | `int`                  | `5`      | 1 (fastest) – 9 (ultra). On 32‑bit processes, values >5 are capped to 5.                            |
 | `Threads`          | `int`                  | `0`      | Number of threads; `0` means “use all cores” (resolved at runtime to `Environment.ProcessorCount`). |
 | `ProcessPriority`  | `ProcessPriorityClass` | `Normal` | Priority class for the 7‑Zip process.                                                               |
+
+#### Platform‑Aware Adjustment Flowchart
+
+```mermaid
+flowchart TD
+  A["GetAdjustedProfile(profileName)"] --> B{"profileName null?"}
+  B -->|Yes| C["Use DefaultProfile"]
+  B -->|No| D["Look up profile by name"]
+  D --> E{"Profile exists?"}
+  E -->|No| F["Throw ArgumentException"]
+  E -->|Yes| G["Copy profile to adjustedProfile"]
+  G --> H{"Is 32-bit process?"}
+  H -->|Yes| I["Cap CompressionLevel to 5"]
+  H -->|No| J["Keep original CompressionLevel"]
+  I --> K{"Threads <= 0?"}
+  J --> K
+  K -->|Yes| L["Set Threads = Environment.ProcessorCount"]
+  K -->|No| M["Keep original Threads"]
+  L --> N["Return adjustedProfile"]
+  M --> N
+```
 
 ### Default profiles
 
@@ -172,6 +286,30 @@ catch (SevenZipException ex)
 Other operating systems and architectures are not supported; a `PlatformNotSupportedException` is thrown when constructing the executor.
 
 The required native binaries are included in the package under the `SevenZip` folder and are automatically copied to the output directory during build.
+
+### Executable Resolution Flowchart
+
+```mermaid
+flowchart TD
+  A["ResolveExecutablePath(basePath)"] --> B{"OS?"}
+  B -->|Windows| C["osPart = windows, exeName = 7za.exe"]
+  B -->|Linux| D["osPart = linux, exeName = 7zz"]
+  B -->|Other| E["Throw PlatformNotSupportedException"]
+  C --> F{"Architecture?"}
+  D --> F
+  F -->|X64| G["archPart = x64"]
+  F -->|X86| H["archPart = x86"]
+  F -->|Other| I["Throw PlatformNotSupportedException"]
+  G --> J{"basePath rooted?"}
+  H --> J
+  J -->|No| K["Combine with AppContext.BaseDirectory"]
+  J -->|Yes| L["Keep basePath"]
+  K --> M["finalPath = basePath/osPart/archPart/exeName"]
+  L --> M
+  M --> N{"File exists?"}
+  N -->|Yes| O["Return finalPath"]
+  N -->|No| P["Throw FileNotFoundException"]
+```
 
 ---
 
