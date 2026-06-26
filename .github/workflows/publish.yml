@@ -1,0 +1,61 @@
+name: Publish to NuGet.org
+
+on:
+  push:
+    tags:
+      - 'v*'   # e.g., v1.0.0, v1.1.0-beta.1
+
+permissions:
+  contents: read
+  id-token: write   # Required for NuGet Trusted Publishing (OIDC) - NuGet/login@v1 OIDC token exchange
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.0.x
+            9.0.x
+            8.0.x
+            7.0.x
+            6.0.x
+            
+      - name: Get version from latest tag
+        id: version
+        run: |
+          TAG=$(git describe --tags --abbrev=0)
+          VERSION=${TAG#v}   # strips the leading 'v' prefix if present
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          
+      - name: Restore
+        run: dotnet restore src/Linguistics.slnx
+
+      - name: Build
+        run: dotnet build src/Linguistics/Linguistics.csproj --configuration Release --no-restore
+
+      - name: Pack
+        run: dotnet pack src/Linguistics/Linguistics.csproj --configuration Release --output ./artifacts /p:MinVerVersionOverride=${{ steps.version.outputs.VERSION }} --no-build
+
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ahmadmdabit
+
+      - name: Push to NuGet.org (Trusted Publishing)
+        run: |
+          for pkg in ./artifacts/*.nupkg ./artifacts/*.snupkg; do
+            dotnet nuget push "$pkg" \
+              --api-key ${{ steps.login.outputs.NUGET_API_KEY }} \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done

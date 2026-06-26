@@ -1,0 +1,86 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net6.0;net7.0;net8.0;net9.0;net10.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>13</LangVersion>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<Deterministic>false</Deterministic>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<PackageId>SevenZipRunner</PackageId>
+		<Authors>Ahmet Fatihoglu</Authors>
+		<MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
+		<MinVerMinimumMajorMinor>1.0</MinVerMinimumMajorMinor>
+		<MinVerTagPrefix>v</MinVerTagPrefix>
+		<MinVerAutoIncrement>patch</MinVerAutoIncrement>
+		<Description>TODO</Description>
+		<PackageProjectUrl>https://github.com/ahmadmdabit/SevenZipRunner</PackageProjectUrl>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/ahmadmdabit/SevenZipRunner</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>TODO</PackageTags>
+		<Title>SevenZipRunner</Title>
+		<Copyright>Copyright (c) Ahmet Fatihoglu 2026</Copyright>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	</PropertyGroup>
+
+	<!-- Deterministic builds: always on locally; CI flag activates path-normalization for SourceLink -->
+	<PropertyGroup>
+		<Deterministic>true</Deterministic>
+		<!-- ContinuousIntegrationBuild remaps local source paths to repo-relative ones, required for snupkg debugging to work correctly in CI -->
+		<ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\README.md" Pack="True" PackagePath="\README.md" Link="README.md" />
+		<None Include="..\..\LICENSE" Pack="True" PackagePath="\LICENSE" Link="LICENSE" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+		<PackageReference Include="MinVer" Version="7.0.0" PrivateAssets="All" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="8.0.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="SevenZip\linux\x64\7zz">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="SevenZip\linux\x64\7zzs">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="SevenZip\linux\x86\7zz">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="SevenZip\linux\x86\7zzs">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="SevenZip\windows\x64\7za.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="SevenZip\windows\x64\7za.exe">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="SevenZip\windows\x64\7zxa.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="SevenZip\windows\x86\7za.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="SevenZip\windows\x86\7za.exe">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="SevenZip\windows\x86\7zxa.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>
