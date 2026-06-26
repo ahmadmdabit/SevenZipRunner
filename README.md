@@ -1,6 +1,11 @@
 # SevenZipRunner
 
-A lightweight .NET library for invoking 7‑Zip (7za/7zz) from managed code, with platform‑aware profiles for compression and extraction.
+[![NuGet](https://img.shields.io/nuget/v/SevenZipRunner)](https://nuget.org/packages/SevenZipRunner)
+[![CI](https://github.com/ahmadmdabit/SevenZipRunner/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/ahmadmdabit/SevenZipRunner/actions/workflows/ci.yml)
+[![.NET](https://img.shields.io/badge/.NET-6.0_•_7.0_•_8.0_•_9.0_•_10.0-purple)](https://dotnet.microsoft.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue)](LICENSE)
+
+**SevenZipRunner** A lightweight .NET library for invoking 7‑Zip (7za/7zz) from managed code, with platform‑aware profiles for compression and extraction.
 
 The library embeds native 7‑Zip executables for Windows and Linux (x86 and x64) and exposes a simple async API. It supports named compression profiles (e.g., `Balanced`, `MaxCompression`, `LogArchiving`) and automatically adjusts parameters based on the runtime environment (OS, architecture, CPU count) to avoid crashes and balance resource usage.
 
